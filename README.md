@@ -37,24 +37,25 @@ et jamais sur un iPhone.
 
 Le rappel passera donc par le **calendrier du téléphone**, avec un fichier
 `.ics`. Le téléphone rappelle ensuite tout seul, app fermée et sans réseau.
-C'est la tranche 4. Le même choix a déjà été fait dans `love-money`.
+C'est la tranche 5. Le même choix a déjà été fait dans `love-money`.
 
 ## Où en est le chantier
 
-L'app se construit en tranches, chacune jugeable sur un téléphone.
+L'app se construit en tranches, chacune jugeable sur un téléphone. Depuis le
+2026-09-11, elle suit la **règle des 7-7-7** : un tête-à-tête par semaine,
+une nuit ailleurs toutes les 7 semaines, des vacances tous les 7 mois. Le
+détail est dans `docs/spec-7-7-7.md`.
 
-1. **Socle et profils** · LIVRÉ. Les deux profils, le choix des langages, le
-   bouton d'installation, le fonctionnement hors ligne.
-2. **Corpus et filtrage** · une cinquantaine d'idées, le classement par
-   langages des deux profils.
-3. **Statuts et mémoire** · à faire · planifiée · faite, la règle des six mois,
-   le bandeau d'accueil.
-4. **Calendrier** · le fichier `.ics`.
-5. **Ses idées et la sauvegarde** · ajout personnel, export et import JSON.
+1. **Socle et profils** · LIVRÉ, installé sur le téléphone.
+2. **Le verre et le classement** · la direction « Verre de saison », et le
+   classement des cinq langages.
+3. **La grille et l'angle** · une case par semaine, une page par saison,
+   l'angle de la semaine.
+4. **La sauvegarde** · export et import JSON.
+5. **Les rappels** · trois séries dans l'agenda, posées une fois.
 
-⚠️ **Les dix idées de `js/idees.js` sont un échantillon jetable.** Elles
-servent à juger le ton et la forme, pas le contenu. Le vrai corpus arrive à la
-tranche 2 et remplacera ce fichier. Leur FORME, elle, est définitive.
+⚠️ **Les dix idées de `js/idees.js` sont un reste de la tranche 1.** Le corpus
+a été abandonné : elles disparaissent à la tranche 3.
 
 ## Trois mots, et pas un de plus
 
@@ -72,7 +73,7 @@ aucune requête. Ce que deux personnes se disent n'a aucune raison de sortir de
 l'appareil.
 
 Corollaire : **la seule protection contre un téléphone perdu est une
-sauvegarde**, et elle arrive à la tranche 5. D'ici là, l'écran Réglages sait
+sauvegarde**, et elle arrive à la tranche 4. D'ici là, l'écran Réglages sait
 seulement tout effacer.
 
 Deux profils sur **un seul téléphone**, celui de qui organise. Une vraie

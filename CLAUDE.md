@@ -7,8 +7,14 @@ dépendance, aucun outil de build**. Servie par GitHub Pages sur `main` :
 Le `README.md` décrit l'app et ses partis pris. Ce fichier dit ce qui casse
 quand on y touche.
 
-La spec de conception est dans l'autre dépôt :
-`docs/superpowers/specs/2026-09-04-a-deux-design.md`.
+**La spec en vigueur est `docs/spec-7-7-7.md`** (2026-09-11) : la règle des
+7-7-7, la grille des saisons, l'angle de la semaine, la direction « Verre de
+saison ». Elle remplace en partie la spec d'origine, restée dans le dossier
+parent (`docs/superpowers/specs/2026-09-04-a-deux-design.md`).
+
+⚠️ **Google Agenda jette les `VALARM` d'un fichier `.ics`** (vérifié sur son
+Pixel le 2026-09-10) : le rappel, c'est le MOMENT de l'événement, et jamais
+un événement sur la journée entière.
 
 ## Invariants
 
