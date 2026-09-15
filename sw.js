@@ -7,8 +7,14 @@
    répercuter dans le HTML, le CSS ou les modules.
    ========================================================================= */
 
-const VERSION = '0.1.0';
-const SHELL = 'ad-shell-' + VERSION;
+const VERSION = '0.1.1';
+/* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le même
+   CacheStorage. Le nom porte l'app et sa portée, et l'activation ne supprime
+   QUE ces caches-là : avant, chaque mise à jour effaçait le hors ligne des
+   autres apps (GVT, La Cour, les jeux...). */
+const PREFIXE = 'adeux:' + new URL(self.registration.scope).pathname + ':';
+const SHELL = PREFIXE + VERSION;
+const ANCIEN = 'ad-shell-';
 
 const FILES = [
   './',
@@ -40,7 +46,9 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== SHELL).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys
+        .filter(k => (k.startsWith(PREFIXE) && k !== SHELL) || k.startsWith(ANCIEN))
+        .map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -54,9 +62,16 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== location.origin) return;
 
-  /* Navigation : le réseau d'abord si disponible, sinon la coquille. */
+  /* Navigation : le réseau d'abord si disponible, sinon la coquille.
+     `no-cache` revalide le HTML : Pages le garde 10 minutes en cache HTTP, et
+     un ancien index.html pouvait sinon partir avec le nouveau JavaScript. */
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).catch(() => caches.match('./index.html')));
+    const coquille = () => caches.open(SHELL).then(c => c.match('./index.html'));
+    e.respondWith(
+      fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
+        .then(res => res.ok ? res : coquille().then(hit => hit || res))
+        .catch(coquille)
+    );
     return;
   }
 
@@ -70,13 +85,12 @@ self.addEventListener('fetch', e => {
      tard. */
   const jetable = new URL(req.url).search !== '';
 
+  /* On cherche dans NOTRE cache seulement : un `caches.match` sans nom
+     pouvait rendre le fichier d'une autre version ou d'une autre app. */
   e.respondWith(
-    caches.match(req).then(hit => hit || fetch(req).then(res => {
-      if (res.ok && !jetable) {
-        const copie = res.clone();
-        caches.open(SHELL).then(c => c.put(req, copie)).catch(() => {});
-      }
+    caches.open(SHELL).then(c => c.match(req).then(hit => hit || fetch(req).then(res => {
+      if (res.ok && !jetable) c.put(req, res.clone()).catch(() => {});
       return res;
-    }))
+    })))
   );
 });
