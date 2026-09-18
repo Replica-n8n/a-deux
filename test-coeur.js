@@ -150,6 +150,20 @@ verifie('identifiant en double refusé',
 verifie('étiquettes lisibles',
   C.etiquettes(bonne), ['Petit budget', 'Une soirée', 'Dedans']);
 
+/* ------------------------------------------------------ le service worker */
+
+/* Les relais de GitHub Pages gardent un fichier 10 minutes après une
+   publication. Sans la VERSION dans l'adresse, une installation faite dans
+   ces 10 minutes rangeait l'ANCIEN fichier dans le cache de la NOUVELLE
+   version, et le servait sans erreur jusqu'à la suivante. */
+{
+  const sw = require('fs').readFileSync(require('path').join(__dirname, 'sw.js'), 'utf8');
+  const install = sw.slice(sw.indexOf("addEventListener('install'"), sw.indexOf("addEventListener('activate'"));
+  verifie('sw : installation trouvée', install.length > 0, true);
+  verifie("sw : la version est dans l'adresse", /v=' \+ encodeURIComponent\(VERSION\)/.test(install), true);
+  verifie("sw : plus d'addAll sans version", /\.addAll\(/.test(install), false);
+}
+
 /* --------------------------------------------------------------- bilan */
 
 if (echecs) {

@@ -7,7 +7,7 @@
    répercuter dans le HTML, le CSS ou les modules.
    ========================================================================= */
 
-const VERSION = '0.1.1';
+const VERSION = '0.1.2';
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage. Le nom porte l'app et sa portée, et l'activation ne supprime
    QUE ces caches-là : avant, chaque mise à jour effaçait le hors ligne des
@@ -35,10 +35,24 @@ self.addEventListener('install', e => {
   /* `cache: 'reload'` est indispensable : sans lui, addAll() passe par le
      cache HTTP du navigateur et peut remplir un cache tout neuf avec les
      ANCIENS fichiers. On obtient un cache nommé 0.2.0 contenant du 0.1.0, et
-     une mise à jour qui ne met rien à jour. */
+     une mise à jour qui ne met rien à jour.
+
+     ⚠️ ET ÇA NE SUFFIT PAS : `reload` contourne le cache du TÉLÉPHONE, pas
+     celui des serveurs relais de GitHub Pages, qui gardent chaque fichier
+     jusqu'à 10 minutes après une publication. Installé dans ces 10 minutes,
+     le nouveau service worker rangeait l'ANCIEN fichier dans le cache de la
+     NOUVELLE version, et le servait cache d'abord jusqu'à la version
+     suivante, sans aucune erreur (vécu sur le Chevalier le 2026-09-17). On
+     demande donc chaque fichier avec la VERSION dans son adresse : pour les
+     relais c'est une adresse jamais vue, ils vont la chercher à la source.
+     On le range sous son nom propre. */
   e.waitUntil(
     caches.open(SHELL)
-      .then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' }))))
+      .then(c => Promise.all(FILES.map(f =>
+        fetch(new Request(f + '?v=' + encodeURIComponent(VERSION), { cache: 'reload' })).then(res => {
+          if (!res.ok) throw new Error(f + ' : ' + res.status);
+          return c.put(f, res);
+        }))))
       .then(() => self.skipWaiting())
   );
 });
