@@ -54,8 +54,9 @@ détail est dans `docs/spec-7-7-7.md`.
 4. **La sauvegarde** · export et import JSON.
 5. **Les rappels** · trois séries dans l'agenda, posées une fois.
 
-⚠️ **Les dix idées de `js/idees.js` sont un reste de la tranche 1.** Le corpus
-a été abandonné : elles disparaissent à la tranche 3.
+⚠️ **Le corpus d'idées a été retiré le 2026-10-01.** Les idées sont écrites
+par elle, dans l'app : trois sur l'accueil, la liste entière dans son écran,
+avec une étiquette Soirée, Nuit ou Vacances.
 
 ## Trois mots, et pas un de plus
 
@@ -63,8 +64,8 @@ a été abandonné : elles disparaissent à la tranche 3.
   secondaire.
 - **Profil** : une personne, son prénom et ses langages. Il y en a deux,
   jamais plus.
-- **Idée** : une sortie ou un geste, taguée par les langages auxquels elle
-  parle.
+- **Idée** : une sortie ou un geste, écrite par toi, étiquetée Soirée, Nuit
+  ou Vacances.
 
 ## Tes données
 
@@ -86,7 +87,6 @@ a-deux/
   index.html            les trois écrans, en HTML statique
   css/app.css           thème sombre unique
   js/coeur.js           dates, langages, profils, contrôle du corpus · testable sous Node
-  js/idees.js           le corpus embarqué
   js/store.js           localStorage
   js/app.js             navigation et rendu
   manifest.webmanifest

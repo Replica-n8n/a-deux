@@ -12,7 +12,7 @@
 
   const C = racine.COEUR;
 
-  const CLES = { moi: 'ad.moi', autre: 'ad.autre' };
+  const CLES = { moi: 'ad.moi', autre: 'ad.autre', idees: 'ad.idees' };
 
   /* Les noms par défaut sont visibles tels quels sur l'accueil tant que rien
      n'a été saisi. « L'autre » plutôt qu'un prénom inventé : l'app ne fait
@@ -61,6 +61,47 @@
     vierge() {
       const p = this.profils();
       return !C.profilComplet(p.moi) && !C.profilComplet(p.autre);
+    },
+
+    /* ------------------------------------------------------------ idées */
+
+    /* Un identifiant qui ne dépend pas de l'horloge seule : deux idées
+       ajoutées dans la même milliseconde auraient sinon le même, et la
+       seconde écraserait la première. Repris de love-money. */
+    identifiant() {
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    },
+
+    idees() {
+      const brut = lire(CLES.idees, []);
+      return Array.isArray(brut) ? brut.map(C.normaliserIdee).filter(Boolean) : [];
+    },
+
+    /* Les plus récentes d'abord : c'est l'ordre de la liste et celui des
+       trois montrées sur l'accueil. On range donc en tête. */
+    ajouterIdee(texte, palier) {
+      const propre = C.normaliserIdee({ id: this.identifiant(), texte, palier });
+      if (!propre) return null;
+      const toutes = this.idees();
+      toutes.unshift(propre);
+      return ecrire(CLES.idees, toutes) ? propre : null;
+    },
+
+    modifierIdee(id, texte, palier) {
+      const toutes = this.idees();
+      const i = toutes.findIndex(x => x.id === id);
+      if (i < 0) return null;
+      const propre = C.normaliserIdee({ id, texte, palier });
+      if (!propre) return null;
+      toutes[i] = propre;
+      return ecrire(CLES.idees, toutes) ? propre : null;
+    },
+
+    /* Renvoie `false` si rien n'a été écrit : sans ce retour, une suppression
+       refusée par le navigateur laisserait l'idée à l'écran sans un mot. */
+    supprimerIdee(id) {
+      const restantes = this.idees().filter(x => x.id !== id);
+      return ecrire(CLES.idees, restantes);
     },
 
     effacerTout() {

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>À deux</title>
-<meta name="description" content="Les langages de l'amour de deux personnes, relus à chaque ouverture, et des idées de sorties qui leur parlent. Fonctionne hors ligne.">
+<meta name="description" content="Les langages de l'amour de deux personnes, relus à chaque ouverture, et vos propres idées de sorties. Fonctionne hors ligne.">
 <meta name="theme-color" content="#15111A">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -59,8 +59,50 @@
       </button>
     </div>
 
-    <h2 class="titre-section">Dix idées d'essai</h2>
-    <div id="idees"></div>
+    <h2 class="titre-section">Tes idées</h2>
+    <div id="idees-apercu"></div>
+    <button class="voir-tout" type="button" id="voir-idees" hidden></button>
+
+    <div class="ajout">
+      <label class="sr-only" for="ajout-texte">Une idée, en quelques mots</label>
+      <div class="ajout-ligne">
+        <input class="saisie" type="text" id="ajout-texte" autocomplete="off"
+               enterkeyhint="done" maxlength="80"
+               placeholder="Une idée, en quelques mots">
+        <button class="plus" type="button" id="ajout-plus" aria-label="Ajouter cette idée">+</button>
+      </div>
+      <div class="pastilles" id="ajout-paliers" role="radiogroup"
+           aria-label="À quel moment cette idée convient"></div>
+      <p class="erreur" id="ajout-erreur" hidden></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================== IDÉES -->
+<section class="screen" id="screen-idees" hidden>
+  <div class="barre">
+    <button class="rond" type="button" data-back aria-label="Retour">←</button>
+    <span class="marque">Tes idées</span>
+    <span class="rond-vide"></span>
+  </div>
+
+  <div class="body">
+    <div class="ajout">
+      <label class="sr-only" for="idee-texte">Une idée, en quelques mots</label>
+      <div class="ajout-ligne">
+        <input class="saisie" type="text" id="idee-texte" autocomplete="off"
+               enterkeyhint="done" maxlength="80"
+               placeholder="Une idée, en quelques mots">
+        <button class="plus" type="button" id="idee-plus" aria-label="Ajouter cette idée">+</button>
+      </div>
+      <div class="pastilles" id="idee-paliers" role="radiogroup"
+           aria-label="À quel moment cette idée convient"></div>
+      <button class="btn-ghost" type="button" id="idee-annuler" hidden>Annuler la modification</button>
+    </div>
+
+    <div id="idees-liste"></div>
+    <p class="vide" id="idees-vide" hidden>Aucune idée pour l'instant.</p>
+    <p class="erreur" id="idees-erreur" hidden></p>
   </div>
 </section>
 
@@ -115,7 +157,6 @@
 </section>
 
 <script src="js/coeur.js"></script>
-<script src="js/idees.js"></script>
 <script src="js/store.js"></script>
 <script src="js/app.js"></script>
 </body>

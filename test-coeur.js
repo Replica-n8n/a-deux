@@ -8,7 +8,6 @@
 */
 
 const C = require('./js/coeur.js');
-const IDEES = require('./js/idees.js');
 
 let echecs = 0;
 function verifie(nom, obtenu, attendu) {
@@ -114,41 +113,43 @@ verifie('résumé à un langage',
   C.resumeProfil({ principal: 'moments', secondaire: null }), 'Moments de qualité');
 verifie('résumé vide', C.resumeProfil({ principal: null }), '');
 
-/* ----------------------------------------------------------- le corpus */
+/* ------------------------------------------------------------ les idées */
 
-/* Le contrôle qui compte : le corpus embarqué passe, sinon une idée mal
-   taguée deviendrait invisible au filtrage de la tranche 2, sans erreur. */
-verifie('le corpus embarqué est propre', C.verifierCorpus(IDEES), []);
-verifie('le corpus n’est pas vide', IDEES.length > 0, true);
+/* Le corpus embarqué a été retiré le 2026-10-01 : les idées sont écrites par
+   elle. Ce qui se teste ici, c'est donc la FORME d'une idée relue, parce
+   qu'un localStorage peut venir d'une version plus ancienne ou avoir été
+   édité à la main. */
 
-const bonne = { id: 'x', titre: 'T', phrase: 'P', langages: ['moments'],
-                cout: 'petit', duree: 'soiree', lieu: 'dedans' };
+verifie('trois paliers', C.PALIERS.map(p => p.id), ['soiree', 'nuit', 'vacances']);
+verifie('palier connu', C.estPalier('nuit'), true);
+verifie('palier inventé', C.estPalier('weekend'), false);
+verifie('nom du palier', C.nomPalier('vacances'), 'Vacances');
+verifie("nom d'un palier inconnu", C.nomPalier('weekend'), '');
 
-verifie('une idée juste passe', C.verifierCorpus([bonne]), []);
-verifie('langage inconnu refusé',
-  C.verifierCorpus([{ ...bonne, langages: ['cuisine'] }]).length, 1);
-verifie('trois langages refusés',
-  C.verifierCorpus([{ ...bonne, langages: ['moments', 'toucher', 'cadeaux'] }]).length, 1);
-verifie('langage répété refusé',
-  C.verifierCorpus([{ ...bonne, langages: ['moments', 'moments'] }]).length, 1);
-verifie('aucun langage refusé',
-  C.verifierCorpus([{ ...bonne, langages: [] }]).length, 1);
-verifie('coût inconnu refusé',
-  C.verifierCorpus([{ ...bonne, cout: 'cher' }]).length, 1);
-verifie('durée inconnue refusée',
-  C.verifierCorpus([{ ...bonne, duree: 'weekend' }]).length, 1);
-verifie('lieu inconnu refusé',
-  C.verifierCorpus([{ ...bonne, lieu: 'ailleurs' }]).length, 1);
-verifie('phrase vide refusée',
-  C.verifierCorpus([{ ...bonne, phrase: '  ' }]).length, 1);
+verifie('une idée juste passe',
+  C.normaliserIdee({ id: 'a', texte: 'Souper au Petit Alep', palier: 'nuit' }),
+  { id: 'a', texte: 'Souper au Petit Alep', palier: 'nuit' });
 
-/* Deux idées au même identifiant : la seconde écraserait la première dès
-   qu'un statut sera rangé par identifiant, à la tranche 3. */
-verifie('identifiant en double refusé',
-  C.verifierCorpus([bonne, { ...bonne, titre: 'Autre' }]).length, 1);
+/* Un palier inconnu ne doit pas rendre l'idée invisible : elle retombe sur
+   le plus fréquent, et reste modifiable. */
+verifie('palier inconnu ramené à soirée',
+  C.normaliserIdee({ id: 'a', texte: 'Patiner', palier: 'weekend' }).palier, 'soiree');
+verifie('palier absent ramené à soirée',
+  C.normaliserIdee({ id: 'a', texte: 'Patiner' }).palier, 'soiree');
 
-verifie('étiquettes lisibles',
-  C.etiquettes(bonne), ['Petit budget', 'Une soirée', 'Dedans']);
+verifie('texte rogné',
+  C.normaliserIdee({ id: 'a', texte: '   Patiner au canal   ' }).texte, 'Patiner au canal');
+
+/* Un texte sans fin casserait la ligne de la liste, et le champ est déjà
+   plafonné à 80 signes côté interface : le cœur le garantit aussi. */
+verifie('texte plafonné à 80 signes',
+  C.normaliserIdee({ id: 'a', texte: 'o'.repeat(200) }).texte.length, 80);
+
+verifie('texte vide refusé', C.normaliserIdee({ id: 'a', texte: '   ' }), null);
+verifie('texte absent refusé', C.normaliserIdee({ id: 'a' }), null);
+verifie('texte qui n’est pas du texte', C.normaliserIdee({ id: 'a', texte: 42 }), null);
+verifie('identifiant manquant refusé', C.normaliserIdee({ texte: 'Patiner' }), null);
+verifie('rien du tout refusé', C.normaliserIdee(null), null);
 
 /* ------------------------------------------------------ le service worker */
 
@@ -170,4 +171,4 @@ if (echecs) {
   console.log('\n' + echecs + ' échec(s)');
   process.exit(1);
 }
-console.log('TOUT EST VERT · ' + IDEES.length + ' idées vérifiées');
+console.log('TOUT EST VERT');

@@ -1,8 +1,8 @@
 /* =========================================================================
    À deux · navigation et rendu
 
-   Les calculs sont dans coeur.js, le stockage dans store.js, le corpus dans
-   idees.js. Ce fichier ne fait que montrer et écouter.
+   Les calculs sont dans coeur.js, le stockage dans store.js. Ce fichier ne
+   fait que montrer et écouter.
    ========================================================================= */
 
 (function () {
@@ -12,7 +12,6 @@
   const $$ = s => [...document.querySelectorAll(s)];
   const C = window.COEUR;
   const S = window.STORE;
-  const IDEES = window.IDEES;
 
   function annoncer(texte) {
     const el = $('#annonce');
@@ -37,6 +36,7 @@
 
     if (nom === 'accueil') rendreAccueil();
     if (nom === 'profil') rendreProfil(etat.qui === 'autre' ? 'autre' : 'moi');
+    if (nom === 'idees') rendreIdees();
     if (nom === 'reglages') rendreReglages();
   }
 
@@ -78,48 +78,223 @@
       '. Modifier.');
   }
 
-  function carteIdee(idee) {
-    const bloc = document.createElement('div');
-    bloc.className = 'idee';
+  /* ------------------------------------------------------------ idées */
 
-    const titre = document.createElement('div');
-    titre.className = 'titre';
-    titre.textContent = idee.titre;
+  /* Les idées sont les siennes. Le corpus embarqué a été retiré le
+     2026-10-01 : dix idées écrites d'avance ont suffi à montrer qu'un
+     catalogue est générique quel que soit son nombre.
 
-    const phrase = document.createElement('p');
-    phrase.className = 'phrase';
-    phrase.textContent = idee.phrase;
+     Trois sur l'accueil, la liste entière dans son écran : l'accueil ne
+     s'allonge jamais, et le champ d'ajout reste sous le pouce. */
+  const APERCU = 3;
 
-    const etiq = document.createElement('div');
-    etiq.className = 'etiquettes';
+  let idEnEdition = null;
 
-    /* Les langages d'abord, et colorés : c'est par eux que la tranche 2
-       filtrera, autant les voir dès maintenant. */
-    idee.langages.forEach(l => {
-      const e = document.createElement('span');
-      e.className = 'etiq langue';
-      e.textContent = C.nomCourt(l);
-      etiq.append(e);
+  function ligneIdee(idee, avecActions) {
+    const ligne = document.createElement('div');
+    ligne.className = 'idee';
+
+    const texte = document.createElement('span');
+    texte.className = 'idee-texte';
+    texte.textContent = idee.texte;
+
+    const etiq = document.createElement('span');
+    etiq.className = 'etiq ' + idee.palier;
+    etiq.textContent = C.nomPalier(idee.palier);
+
+    if (!avecActions) {
+      ligne.append(texte, etiq);
+      return ligne;
+    }
+
+    /* Sur l'écran des idées, la ligne EST le bouton de modification, et la
+       corbeille est une cible à part : deux gestes voisins, jamais le même. */
+    const ouvrir = document.createElement('button');
+    ouvrir.type = 'button';
+    ouvrir.className = 'idee-ouvrir';
+    ouvrir.setAttribute('aria-label', 'Modifier : ' + idee.texte);
+    ouvrir.append(texte, etiq);
+    ouvrir.addEventListener('click', () => editer(idee));
+
+    const jeter = document.createElement('button');
+    jeter.type = 'button';
+    jeter.className = 'idee-jeter';
+    jeter.textContent = '\u00d7';
+    jeter.setAttribute('aria-label', 'Retirer : ' + idee.texte);
+
+    /* Retirer demande deux appuis, et le premier le DIT. Une seule pression
+       ne doit pas effacer, et une boîte de dialogue système couperait le
+       geste à une main. */
+    jeter.addEventListener('click', () => {
+      if (jeter.dataset.arme !== 'oui') {
+        desarmerJeter();
+        jeter.dataset.arme = 'oui';
+        jeter.textContent = 'Retirer ?';
+        jeter.classList.add('arme');
+        return;
+      }
+      if (!S.supprimerIdee(idee.id)) return direErreurIdee('idees');
+      if (idEnEdition === idee.id) finirEdition();
+      annoncer('Idée retirée.');
+      rendreIdees();
     });
-    C.etiquettes(idee).forEach(mot => {
-      const e = document.createElement('span');
-      e.className = 'etiq';
-      e.textContent = mot;
-      etiq.append(e);
-    });
 
-    bloc.append(titre, phrase, etiq);
-    return bloc;
+    ligne.classList.add('avec-actions');
+    ligne.append(ouvrir, jeter);
+    return ligne;
   }
+
+  function desarmerJeter() {
+    $$('.idee-jeter.arme').forEach(b => {
+      b.dataset.arme = '';
+      b.textContent = '\u00d7';
+      b.classList.remove('arme');
+    });
+  }
+
+  function rendreApercu() {
+    const idees = S.idees();
+    const boite = $('#idees-apercu');
+    boite.textContent = '';
+    idees.slice(0, APERCU).forEach(i => boite.append(ligneIdee(i, false)));
+
+    /* Rien encore : une ligne dit quoi faire à la place de la liste, et elle
+       disparaît dès la première idée. */
+    if (!idees.length) {
+      const vide = document.createElement('p');
+      vide.className = 'vide';
+      vide.textContent = 'Écris la première ci-dessous.';
+      boite.append(vide);
+    }
+
+    const voir = $('#voir-idees');
+    voir.hidden = idees.length <= APERCU;
+    voir.textContent = 'Voir les ' + idees.length + ' idées';
+  }
+
+  function rendreIdees() {
+    desarmerJeter();
+    /* Les pastilles se redessinent avec l ecran : sans cet appel, l ecran des
+       idees n affichait AUCUN palier sous le champ, et une idee ajoutee de la
+       prenait Soiree en silence. Vu sur une capture, pas dans un test. */
+    rendrePastilles('idees');
+    const idees = S.idees();
+    const liste = $('#idees-liste');
+    liste.textContent = '';
+    idees.forEach(i => liste.append(ligneIdee(i, true)));
+    $('#idees-vide').hidden = idees.length > 0;
+    $('#idees-erreur').hidden = true;
+  }
+
+  /* Les pastilles de palier sont construites à partir du cœur : ajouter un
+     palier là-bas suffit à le voir ici. */
+  function pastilles(boite, choisi, surChoix) {
+    boite.textContent = '';
+    C.PALIERS.forEach(p => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pastille';
+      b.dataset.palier = p.id;
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', p.id === choisi ? 'true' : 'false');
+      b.textContent = p.nom;
+      b.addEventListener('click', () => surChoix(p.id));
+      boite.append(b);
+    });
+  }
+
+  /* Un palier retenu par écran de saisie, et ils ne se parlent pas : choisir
+     « Vacances » sur l'accueil ne doit pas changer l'autre écran, qui peut
+     être en train de modifier une idée. */
+  const palierChoisi = { accueil: C.PALIER_DEFAUT, idees: C.PALIER_DEFAUT };
+
+  function rendrePastilles(ou) {
+    const boite = ou === 'accueil' ? $('#ajout-paliers') : $('#idee-paliers');
+    pastilles(boite, palierChoisi[ou], id => {
+      palierChoisi[ou] = id;
+      rendrePastilles(ou);
+    });
+  }
+
+  function editer(idee) {
+    /* Un « Retirer ? » armé sur une AUTRE ligne doit retomber : sinon il
+       reste armé pendant toute la modification, et un appui de trop efface
+       une idée qu'on ne regardait même pas. */
+    desarmerJeter();
+    idEnEdition = idee.id;
+    palierChoisi.idees = idee.palier;
+    rendrePastilles('idees');
+    const champ = $('#idee-texte');
+    champ.value = idee.texte;
+    champ.focus();
+    $('#idee-plus').textContent = '\u2713';
+    $('#idee-plus').setAttribute('aria-label', 'Enregistrer la modification');
+    $('#idee-annuler').hidden = false;
+  }
+
+  function finirEdition() {
+    idEnEdition = null;
+    $('#idee-texte').value = '';
+    $('#idee-plus').textContent = '+';
+    $('#idee-plus').setAttribute('aria-label', 'Ajouter cette idée');
+    $('#idee-annuler').hidden = true;
+    palierChoisi.idees = C.PALIER_DEFAUT;
+    rendrePastilles('idees');
+  }
+
+  /* La même phrase sur les DEUX écrans. Sur l'accueil, l'échec n'était
+     qu'annoncé au lecteur d'écran : à l'œil, l'appui sur « + » ne faisait
+     rien et rien ne le disait. Relevé par la revue du diff. */
+  function direErreurIdee(ou) {
+    const el = $(ou === 'accueil' ? '#ajout-erreur' : '#idees-erreur');
+    el.textContent = 'Ce navigateur bloque le stockage du site : rien ne peut ' +
+      'être enregistré. Autoriser les données de site pour cette page.';
+    el.hidden = false;
+    annoncer('Impossible d\u2019enregistrer.');
+  }
+
+  /* N'annonce « ajoutée » que si c'est vrai : un stockage refusé par le
+     navigateur doit se voir, comme pour les profils. */
+  function soumettre(ou) {
+    const champ = ou === 'accueil' ? $('#ajout-texte') : $('#idee-texte');
+    const texte = champ.value.trim();
+    if (!texte) { champ.focus(); return; }
+
+    const modification = (ou === 'idees' && idEnEdition);
+    const range = modification
+      ? S.modifierIdee(idEnEdition, texte, palierChoisi.idees)
+      : S.ajouterIdee(texte, palierChoisi[ou]);
+
+    if (!range) return direErreurIdee(ou);
+
+    $('#ajout-erreur').hidden = true;
+    annoncer(modification ? 'Idée modifiée.' : 'Idée ajoutée.');
+    if (ou === 'idees') { finirEdition(); rendreIdees(); }
+    else { champ.value = ''; rendreApercu(); }
+  }
+
+  $('#ajout-plus').addEventListener('click', () => soumettre('accueil'));
+  $('#idee-plus').addEventListener('click', () => soumettre('idees'));
+  $('#idee-annuler').addEventListener('click', finirEdition);
+
+  /* La touche Entrée vaut l'appui sur « + » : sinon le clavier se referme
+     sans rien enregistrer, et l'idée semble perdue. */
+  $('#ajout-texte').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); soumettre('accueil'); }
+  });
+  $('#idee-texte').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); soumettre('idees'); }
+  });
+
+  $('#voir-idees').addEventListener('click', () => aller({ ecran: 'idees' }));
 
   function rendreAccueil() {
     const p = S.profils();
     rendreCarte('moi', p.moi);
     rendreCarte('autre', p.autre);
-
-    const liste = $('#idees');
-    liste.textContent = '';
-    IDEES.forEach(idee => liste.append(carteIdee(idee)));
+    rendreApercu();
+    rendrePastilles('accueil');
+    $('#ajout-erreur').hidden = true;
   }
 
   /* ----------------------------------------------------------- profil */

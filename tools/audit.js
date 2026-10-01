@@ -507,6 +507,12 @@ export const PLAN_A_DEUX = [
       if (window.STORE && window.STORE.vierge()) {
         window.STORE.enregistrerProfil('moi', { nom: 'Julie', principal: 'moments', secondaire: 'paroles' });
         window.STORE.enregistrerProfil('autre', { nom: 'Alex', principal: 'services', secondaire: 'toucher' });
+        /* Quatre idées, pas trois : au-dessus de l'aperçu, « Voir les N »
+           apparaît, et c'est par lui qu'on atteint l'écran des idées. */
+        window.STORE.ajouterIdee('Souper au Petit Alep', 'soiree');
+        window.STORE.ajouterIdee('Chalet à Sutton', 'nuit');
+        window.STORE.ajouterIdee('Patiner au canal', 'soiree');
+        window.STORE.ajouterIdee('Gaspésie en août', 'vacances');
         document.querySelector('[data-goto="reglages"]').click();
         await attendre(160);
         document.querySelector('#screen-reglages [data-back]').click();
@@ -527,6 +533,20 @@ export const PLAN_A_DEUX = [
       document.querySelector('#screen-profil [data-back]').click();
       await attendre(200);
       document.querySelector('[data-goto="reglages"]').click();
+    } },
+
+  { nom: 'tes idées', attendu: 'screen-idees', aller: async () => {
+      document.querySelector('#screen-reglages [data-back]').click();
+      await attendre(200);
+      document.querySelector('#voir-idees').click();
+    } },
+
+  /* L'écran des idées en MODIFICATION : le bouton change de rôle et
+     « Annuler » apparaît. Un écran mesuré seulement au repos laisserait ces
+     deux états-là sans contrôle. */
+  { nom: 'tes idées, en modification', attendu: 'screen-idees', aller: async () => {
+      document.querySelector('#idees-liste .idee-ouvrir').click();
+      await attendre(150);
     } }
 ];
 

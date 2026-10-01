@@ -117,59 +117,47 @@
       : nomLangage(p.principal);
   }
 
-  /* ----------------------------------------------------------- le corpus */
+  /* ------------------------------------------------------------ les idées */
 
-  const COUTS = ['gratuit', 'petit', 'moyen'];
-  const DUREES = ['heure', 'soiree', 'journee'];
-  const LIEUX = ['dedans', 'dehors'];
+  /* Les idées sont ÉCRITES PAR ELLE, et rien d'autre. Un corpus embarqué a
+     été essayé puis retiré le 2026-10-01 : dix idées ont suffi à montrer
+     qu'un catalogue écrit d'avance est générique, quel que soit son nombre.
 
-  /* Le corpus est écrit à la main. Une faute de frappe sur un identifiant de
-     langage rendrait une idée invisible au filtrage de la tranche 2, en
-     silence et sans la moindre erreur à l'écran. Ce contrôle tourne sous
-     Node et refuse de laisser passer une idée pareille. */
-  function verifierCorpus(idees) {
-    if (!Array.isArray(idees)) return ['le corpus n’est pas une liste'];
+     Une idée porte le palier auquel elle convient, pour qu'un voyage en
+     Gaspésie ne remonte pas un mardi soir. Ce sont les trois paliers de la
+     règle des 7-7-7, déjà le vocabulaire de l'app. */
+  const PALIERS = [
+    { id: 'soiree',   nom: 'Soirée' },
+    { id: 'nuit',     nom: 'Nuit' },
+    { id: 'vacances', nom: 'Vacances' }
+  ];
 
-    const fautes = [];
-    const vus = Object.create(null);
+  const PALIER_DEFAUT = 'soiree';
+  const TEXTE_MAX = 80;
 
-    idees.forEach((idee, i) => {
-      const ou = 'idée ' + i + ' (' + ((idee && idee.titre) || 'sans titre') + ')';
-      if (!idee || typeof idee !== 'object') { fautes.push(ou + ' : ce n’est pas un objet'); return; }
-
-      if (!idee.id || typeof idee.id !== 'string') fautes.push(ou + ' : identifiant manquant');
-      else if (vus[idee.id]) fautes.push(ou + ' : identifiant en double, ' + idee.id);
-      else vus[idee.id] = true;
-
-      if (typeof idee.titre !== 'string' || !idee.titre.trim()) fautes.push(ou + ' : titre vide');
-      if (typeof idee.phrase !== 'string' || !idee.phrase.trim()) fautes.push(ou + ' : phrase vide');
-
-      if (!Array.isArray(idee.langages) || !idee.langages.length) {
-        fautes.push(ou + ' : aucun langage');
-      } else {
-        if (idee.langages.length > 2) fautes.push(ou + ' : plus de deux langages');
-        if (idee.langages.length === 2 && idee.langages[0] === idee.langages[1]) {
-          fautes.push(ou + ' : langage répété');
-        }
-        idee.langages.forEach(l => {
-          if (!estLangage(l)) fautes.push(ou + ' : langage inconnu, ' + l);
-        });
-      }
-
-      if (COUTS.indexOf(idee.cout) < 0) fautes.push(ou + ' : coût inconnu, ' + idee.cout);
-      if (DUREES.indexOf(idee.duree) < 0) fautes.push(ou + ' : durée inconnue, ' + idee.duree);
-      if (LIEUX.indexOf(idee.lieu) < 0) fautes.push(ou + ' : lieu inconnu, ' + idee.lieu);
-    });
-
-    return fautes;
+  function estPalier(id) { return PALIERS.some(p => p.id === id); }
+  function nomPalier(id) {
+    const p = PALIERS.find(x => x.id === id);
+    return p ? p.nom : '';
   }
 
-  const MOT_COUT = { gratuit: 'Gratuit', petit: 'Petit budget', moyen: 'Budget moyen' };
-  const MOT_DUREE = { heure: 'Une heure', soiree: 'Une soirée', journee: 'Une journée' };
-  const MOT_LIEU = { dedans: 'Dedans', dehors: 'Dehors' };
+  /* Une idée relue peut venir d'une version plus ancienne, ou d'un
+     localStorage édité à la main. Ce qui ne tient pas debout est écarté à la
+     relecture plutôt que de traverser l'app et de casser un rendu plus loin.
 
-  function etiquettes(idee) {
-    return [MOT_COUT[idee.cout], MOT_DUREE[idee.duree], MOT_LIEU[idee.lieu]].filter(Boolean);
+     Le texte est rogné et plafonné : une idée tient sur une ligne de
+     téléphone, et un texte sans fin casserait la ligne de la liste. */
+  function normaliserIdee(brut) {
+    if (!brut || typeof brut !== 'object') return null;
+    if (!brut.id || typeof brut.id !== 'string') return null;
+    if (typeof brut.texte !== 'string') return null;
+    const texte = brut.texte.trim().slice(0, TEXTE_MAX);
+    if (!texte) return null;
+    return {
+      id: String(brut.id),
+      texte,
+      palier: estPalier(brut.palier) ? brut.palier : PALIER_DEFAUT
+    };
   }
 
   /* ------------------------------------------------------------- export */
@@ -178,7 +166,7 @@
     depuisTexte, versTexte, aujourdHui, joursEntre, ajouterMois, formaterDate,
     LANGAGES, estLangage, nomLangage, nomCourt,
     normaliserProfil, profilComplet, resumeProfil,
-    COUTS, DUREES, LIEUX, verifierCorpus, etiquettes
+    PALIERS, PALIER_DEFAUT, TEXTE_MAX, estPalier, nomPalier, normaliserIdee
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = API;

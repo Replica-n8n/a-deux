@@ -59,9 +59,33 @@ await clic('#pr-principal .opt:nth-child(4)');          // Services rendus
 await clic('#pr-secondaire .opt:nth-child(5)');         // Toucher physique
 await clic('#pr-fini');
 await page.waitForTimeout(250);
+
+/* Les idées sont écrites comme elle les écrirait : par le champ et le « + »,
+   pas semées dans le stockage. Une capture prise sur un stockage préfabriqué
+   prouverait le rendu, pas le chemin. */
+const ecrire = async (texte, palier) => {
+  await page.fill('#ajout-texte', texte);
+  await page.evaluate(p => document.querySelector(`#ajout-paliers [data-palier="${p}"]`).click(), palier);
+  await clic('#ajout-plus');
+  await page.waitForTimeout(120);
+};
+await ecrire('Souper au Petit Alep', 'soiree');
+await ecrire('Chalet à Sutton', 'nuit');
+await ecrire('Patiner au canal', 'soiree');
+await ecrire('Gaspésie en août', 'vacances');
 await prendre('3-accueil-rempli');
 
+await clic('#voir-idees');
+await page.waitForTimeout(250);
+await prendre('4-tes-idees');
+
+await page.evaluate(() => document.querySelectorAll('#idees-liste .idee-jeter')[1].click());
+await page.waitForTimeout(150);
+await prendre('5-retirer-arme');
+
+await page.evaluate(() => document.querySelector('#screen-idees [data-back]').click());
+await page.waitForTimeout(250);
 await clic('[data-goto="reglages"]');
-await prendre('4-reglages');
+await prendre('6-reglages');
 
 await navigateur.close();
